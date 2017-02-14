@@ -13,7 +13,7 @@ import UIKit
 /*
  关系】f:父,m:母,h:夫,w:妻,s:子,d:女,xb:兄弟,ob:兄,lb:弟,xs:姐妹,os:姐,ls:妹
  
- 【修饰符】 1:男性,0:女性,&o:年长,&l:年幼,#:隔断,[a|b]:并列
+ 【修饰符】 &o:年长,&l:年幼,#:隔断,[a|b]:并列
  */
 
 // 返回称谓集合
@@ -53,7 +53,7 @@ let filter = relationship()
 // 是否反转
 var reverse = false
 // 称谓转换成关联字符
-func selectors(str:String) -> String? {
+func transform(str:String) -> String? {
     var result = String()
     if !str.isEmpty{
         var lists = str.components(separatedBy: "的")
@@ -71,7 +71,6 @@ func selectors(str:String) -> String? {
                         }
                         return false
                     }
-                    
                     if isContain && (key != "") { // 过滤 “我”
                         arr = key
                         has = true
@@ -84,7 +83,6 @@ func selectors(str:String) -> String? {
             
         }
     }
-    //result.remove(at: result.startIndex)
     if reverse {
         result = reverseKey(key: result)
     }
@@ -116,33 +114,38 @@ struct FilteHelper {
         var s = String()
         if (!hash.contains(sel)){
             hash.insert(sel)
-            var status = true
-            repeat{
-                s = sel
-                if let temp = filterData {
-                    for item in temp {
-                        let exp = item["exp"]
-                        let str = item["str"]
-                        let replacer: RegexHelper = try! RegexHelper(exp!)
-                        sel = replacer.replace(input: sel, template: str!)
-                        print(sel)
-                        if sel.contains("#"){
-                            let sep = sel.components(separatedBy: "#")
-                            for key in sep {
-                                //filterSelectors(selector: key)
-                                print(key)
-                                filter(input: key)
+            if (sel.isEmpty){ // 我 自身直接添加不进行 filter
+                result.append(sel)
+            }else {
+                var status = true
+                repeat{
+                    s = sel
+                    if let temp = filterData {
+                        for item in temp {
+                            let exp = item["exp"]
+                            let str = item["str"]
+                            let replacer: RegexHelper = try! RegexHelper(exp!)
+                            sel = replacer.replace(input: sel, template: str!)
+                            print(sel)
+                            if sel.contains("#"){
+                                let sep = sel.components(separatedBy: "#")
+                                for key in sep {
+                                    //filterSelectors(selector: key)
+                                    print(key)
+                                    filter(input: key)
+                                }
+                                status = false
+                                break
                             }
-                            status = false
-                            break
                         }
                     }
+                }while s != sel
+                
+                if (status){
+                    result.append(sel)
                 }
-            }while s != sel
-            
-            if (status){
-                result.append(sel)
             }
+            
         }
     }
     
@@ -279,12 +282,17 @@ func reverseKey(key:String) -> String {
     return newKey
 }
 
-var str  = "我的妈妈"
-let result = selectors(str: str)
-
-var filterHelper = FilteHelper(result!)
-filterHelper.filterSelectors()
-filterHelper.result
-//filterHelper.filter(input: ",ob")
-//dataValueByKeys(result: [",s,d",",d"])
-dataValueByKeys(result: filterHelper.result)
+func calculate(str:String) -> String {
+    var result = String()
+    let keys = transform(str: str)
+    
+    var filterHelper = FilteHelper(keys!)
+    filterHelper.filterSelectors()
+    result = dataValueByKeys(result: filterHelper.result)!
+    //filterHelper.result
+    //filterHelper.filter(input: ",ob")
+    //dataValueByKeys(result: [",s,d",",d"])
+    return result
+}
+var str  = "我的哥哥的弟弟"
+calculate(str: str)
