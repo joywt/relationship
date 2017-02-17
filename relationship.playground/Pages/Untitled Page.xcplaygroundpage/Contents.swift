@@ -208,46 +208,68 @@ func dataValueByKeys(result:Array<String>) -> String? {
     var dataValue = String()
     var array = Array<String>()
     for key in result {
-        print(key)
         var temp = key
         if !temp.isEmpty {
             temp.remove(at: temp.startIndex)
         }
-        
-        let value  = valueByKey(key: temp)
-        if  let value = value {
-            array.append(value)
+        let errorMes = errorMessage(key: temp)
+        if  errorMes.isEmpty {
+            let value  = valueByKey(key: temp)
+            if  let value = value {
+                array.append(value)
+            }else {
+                
+                array = getData(d: temp)
+                if array.isEmpty {
+                    temp
+                    let replacer: RegexHelper = try! RegexHelper("[ol]") // 过滤兄弟、姐妹这种大小关系
+                    let newkey = replacer.replace(input: temp, template: "")
+                    array = getData(d: newkey)
+                }
+                if array.isEmpty {
+                    let replacer: RegexHelper = try! RegexHelper("[ol]") // 过滤兄弟、姐妹这种大小关系
+                    let newkey = replacer.replace(input: temp, template: "x")
+                    array = getData(d: newkey)
+                }
+                if array.isEmpty {
+                    let replacer: RegexHelper = try! RegexHelper("x") // 过滤兄弟、姐妹这种大小关系
+                    var newkey = replacer.replace(input: temp, template: "l")
+                    array = getData(d: newkey)
+                    newkey = replacer.replace(input: temp, template: "o")
+                    array = array + getData(d: newkey)
+                }
+            }
+
         }else {
-            
-            array = getData(d: temp)
-            if array.isEmpty {
-                temp
-                let replacer: RegexHelper = try! RegexHelper("[ol]") // 过滤兄弟、姐妹这种大小关系
-                let newkey = replacer.replace(input: temp, template: "")
-                newkey
-                array = getData(d: newkey)
+            dataValue = errorMes
+            break
+        }
+        
+    }
+    if dataValue.isEmpty {
+        if (array.isEmpty){
+            dataValue = "关系有点远，再玩就坏了"
+        }else {
+            for v in array {
+                dataValue = dataValue + "/\(v)"
             }
-            if array.isEmpty {
-                let replacer: RegexHelper = try! RegexHelper("[ol]") // 过滤兄弟、姐妹这种大小关系
-                let newkey = replacer.replace(input: temp, template: "x")
-                array = getData(d: newkey)
-            }
-            if array.isEmpty {
-                let replacer: RegexHelper = try! RegexHelper("x") // 过滤兄弟、姐妹这种大小关系
-                var newkey = replacer.replace(input: temp, template: "l")
-                array = getData(d: newkey)
-                newkey = replacer.replace(input: temp, template: "o")
-                array = array + getData(d: newkey)
-            }
+            dataValue.remove(at: dataValue.startIndex)
         }
     }
-    for v in array {
-        dataValue = dataValue + "/\(v)"
-    }
-    dataValue.remove(at: dataValue.startIndex)
+    
     return dataValue
 }
 
+func errorMessage(key:String) -> String{
+    var message = String()
+    switch key {
+    case "ob,h","xb,h","lb,h","os,w","ls,w","xs,w":
+        message = "根据我国法律暂不支持同性婚姻，怎么称呼你自己决定吧"
+        break
+    default: break
+    }
+    return message
+}
 // 互查 反转
 
 func reverseKey(key:String) -> String {
@@ -294,5 +316,5 @@ func calculate(str:String) -> String {
     //dataValueByKeys(result: [",s,d",",d"])
     return result
 }
-var str  = "我的哥哥的弟弟"
+var str  = "我的哥哥的妈妈的爸爸的妈妈的爸爸的妈妈的妈妈"
 calculate(str: str)
